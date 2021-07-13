@@ -1,11 +1,11 @@
 html {
-    margin: 0;
-    padding: 0;
+  margin: 0;
+  padding: 0;
 }
 
 html,
 body {
-    background-image: url('./../beach.jpg');
+  background-image: url("./../beach.jpg");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -15,34 +15,37 @@ body {
 }
 
 .user-input {
-    position: absolute;
-    width: 100px;
-    z-index: 1;
-    left: calc(100% - 270px);
-    top: 60px;
-    font-size: 20px;
-    height: 50px;
-    text-align: center;
-}
-
-input[type=number]::-webkit-inner-spin-button,
-input[type=number]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    margin: 0;
-}
-.hidden {
-    display: none;
+  position: absolute;
+  width: 200px;
+  left: 45%;
+  top: 44%;
+  font-size: 20px;
+  height: 50px;
+  text-align: center;
 }
 
 .button {
-    position: absolute;
-    width: 100px;
-    z-index: 1;
-    left: calc(100% - 120px);
-    top: 60px;
-    font-size: 20px;
-    height: 55px;
-    text-align: center;
+  position: absolute;
+  width: 100px;
+  left: calc(100% - 120px);
+  top: 60px;
+  font-size: 20px;
+  height: 55px;
+  text-align: center;
+}
+.hidden {
+  display: none;
+}
+
+.imgage {
+  animation: fall 2s linear forwards infinite;
+  animation-delay: 1s;
+}
+@keyframes fall {
+  from {
+    transform: translateY(-10vh);
+  }
+  to {
+    transform: translateY(100vh);
+  }
 }
