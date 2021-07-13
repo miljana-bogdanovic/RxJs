@@ -6,7 +6,7 @@ import { PlayerView } from "../Player/player.view";
 
 export class Game{
     playerController : PlayerController;
-
+    score : number=0;
 
      constructor( 
         ctx : HTMLCanvasElement

@@ -7,6 +7,7 @@ import {
   from,
   iif,
   of,
+  empty,
 } from "rxjs";
 import {
   concatMap,
@@ -21,6 +22,7 @@ import {
   startWith,
   switchMap,
   take,
+  takeWhile,
   tap,
 } from "rxjs/operators";
 import { combineLatest, merge } from "rxjs";
@@ -31,8 +33,8 @@ import { Player } from "../Player/player.model";
 import { Game } from "./game.model";
 import { GameView } from "./game.view";
 import { Coctail } from "../Coctail/coctail.model";
-import { EMPTY } from "rxjs";
-const API_URL = "http://localhost:3000";
+
+import { getPlayer, postPlayer, putPlayerHighScore } from "../services/service";
 
 export class GameContoller {
   game: Game;
@@ -47,13 +49,21 @@ export class GameContoller {
   Points$: Observable<[number, CoctailController[]]>;
   PlayerEnterPress$: Observable<string>;
   HighScoreSet$: Subject<number>;
+  NewGame$: Observable<any>;
+  IsAlive$: BehaviorSubject<boolean>;
+
   constructor(game: Game, gameView: GameView) {
     this.game = game;
     this.gameView = gameView;
+    this.IsAlive$ = new BehaviorSubject(true);
+    this.ScoreBehavior$ = new BehaviorSubject(0);
+    this.HighScoreSet$ = new Subject<number>();
+
     this.createObservables();
   }
 
   startGame() {
+    this.IsAlive$.next(true);
     this.Game$.subscribe((interval) => {
       this.renderGameScene(
         interval[0],
@@ -73,10 +83,13 @@ export class GameContoller {
 
     this.CurrentScore$.pipe(
       map((score) => {
+        this.game.score = score;
+        console.log(this.game.score);
         this.gameView.showScore(score);
       })
     );
     this.PlayerEnterPress$.subscribe((name) => {});
+    this.NewGame$.subscribe();
   }
 
   detectCollision(coctails: CoctailController[], player: Player) {
@@ -115,13 +128,19 @@ export class GameContoller {
   }
 
   createObservables() {
-    this.ScoreBehavior$ = new BehaviorSubject(0);
-    this.HighScoreSet$ = new Subject<number>();
+    this.NewGame$ = fromEvent(this.gameView.button, "click").pipe(
+      map(() => {
+        this.saveHighScoreAndRestart();
+      })
+    );
+
     this.CurrentScore$ = this.ScoreBehavior$.pipe(
       scan((prev, curr) => prev + curr),
       map((score) => {
-        if (score * 50 > this.game.playerController.getPlayerHighScore())
+        if (score * 50 > this.game.playerController.getPlayerHighScore()) {
+          this.game.score = score * 50;
           this.game.playerController.setPlayerHighScore(score * 50);
+        }
         return score;
       })
     );
@@ -177,77 +196,65 @@ export class GameContoller {
     this.PlayerEnterPress$ = fromEvent(this.gameView.input, "keyup").pipe(
       pluck("key"),
       filter((key) => key === "Enter"),
-      map(
-        (value) => ({ value }),
-        filter(({ value }) => value === "Enter")
-      ),
+
       switchMap((_) => {
-        return this.getPlayer(this.gameView.input.value);
+        return getPlayer(this.gameView.input.value);
       }),
-      map((value) => {
-        console.log(value);
-        return value;
+      switchMap((response: { name: string; highScore: number }[]) => {
+        if (response)
+          return response.length > 0
+            ? of(response)
+            : of(postPlayer(this.gameView.input.value));
       }),
-      ////filter((value)=> value!=undefined),
-      ///concatMap((response)=>response===[] ? EMPTY : this.postPlayer(this.gameView.input.value)),
-      map((response: { name: string; highScore: number }[]) => {
-        this.gameView.hideInput();
-        this.game.playerController.setPlayerName(response[0].name);
-        this.game.playerController.setPlayerHighScore(response[0].highScore);
-        this.HighScoreSet$.next(response[0].highScore);
+      map((response: { name: string; highScore: number; id: string }[]) => {
+        this.userEntered(response[0]);
         return this.gameView.input.value;
       })
     );
-    //const postUser$ = this.postPlayer(this.gameView.input.value);
+
     this.Game$ = combineLatest([
       this.CurrentScore$,
       this.PlayerMovement$,
       this.Coctails$,
-    ]).pipe(skipUntil(this.HighScoreSet$));
+    ]).pipe(
+      skipUntil(this.HighScoreSet$),
+      takeWhile(() => this.IsAlive$.value)
+    );
 
-    this.Points$ = combineLatest([this.PlayerMovement$, this.Coctails$]);
+    this.Points$ = combineLatest([this.PlayerMovement$, this.Coctails$]).pipe(
+      takeWhile(() => this.IsAlive$.value)
+    );
   }
 
   createCoctail() {
     const cocatil = new Coctail(
       this.getRandomNumber(this.gameView.canvas.width),
       0,
-      "./../" + this.getRandomNumber(4) + ".png"
+      "./../resources/" + this.getRandomNumber(4) + ".png"
     );
     const coctailView = new CoctailView(cocatil, this.gameView.ctx);
     const coctailController = new CoctailController(cocatil, coctailView);
     return [coctailController];
   }
-
-  getPlayer(input: String): Observable<{ name: string; highScore: number }[]> {
-    return from(
-      fetch(`${API_URL}/players/?name=${input}`)
-        .then((response) => {
-          if (response.ok) return response.json();
-          else throw new Error("fetch error");
-        })
-        .catch((er) => console.log(er))
-    );
+  saveHighScoreAndRestart() {
+    if (this.game.playerController.getPlayerHighScore() == this.game.score) {
+      putPlayerHighScore(
+        this.game.playerController.getPlayerHighScore(),
+        this.game.playerController.getPlayerID(),
+        this.game.playerController.getPlayerName()
+      );
+    }
+    this.gameView.clearCanvas();
+    this.IsAlive$.next(false);
+    this.gameView.showEnd(this.game.playerController.getPlayerHighScore());
   }
-  postPlayer(input: String): Observable<{ name: string; highScore: number }[]> {
-    return from(
-      fetch(`${API_URL}/players`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: input,
-          highScore: 0,
-        }),
-      })
-        .then((p) => {
-          if (p.ok) {
-            return p.json();
-          } else throw new Error("fetch error");
-        })
-        .catch((er) => console.log(er))
-    );
-    //return of([{name : '', highScore : 0}]);
+  userEntered(response: { name: string; highScore: number; id: string }) {
+    this.game.playerController.setPlayerName(response.name);
+    this.game.playerController.setPlayerID(response.id);
+    this.gameView.hideInput();
+    this.game.playerController.setPlayerName(response.name);
+    this.game.playerController.setPlayerHighScore(response.highScore);
+    this.HighScoreSet$.next(response.highScore);
+    this.gameView.addEndButton();
   }
 }

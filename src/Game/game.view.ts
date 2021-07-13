@@ -6,7 +6,7 @@ export class GameView {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
   input: HTMLInputElement;
-
+  button: HTMLButtonElement;
   constructor() {
     this.createCanvas();
   }
@@ -26,6 +26,11 @@ export class GameView {
     document.body.appendChild(this.input);
 
     this.input.focus();
+
+    this.button = document.createElement("button");
+    this.button.setAttribute("class", "hidden");
+    this.button.innerHTML = "End game";
+    document.body.appendChild(this.button);
   }
 
   showScore(score: number) {
@@ -37,7 +42,9 @@ export class GameView {
   hideInput() {
     this.input.setAttribute("class", "hidden");
   }
-
+  addEndButton() {
+    this.button.setAttribute("class", "button");
+  }
   clearCanvas() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
   }
@@ -48,5 +55,11 @@ export class GameView {
   }
   clearInput() {
     this.input.value = "";
+  }
+  showEnd(score: number) {
+    this.clearCanvas();
+    this.ctx.fillStyle = "#000000";
+    this.ctx.font = "bold 26px sans-serif";
+    this.ctx.fillText(`Highscore: ${score}`, 350, 50);
   }
 }

@@ -14,8 +14,18 @@ export class PlayerController {
     this.playerModel.setHighScore(higscore);
     this.playerView.showHighScore(higscore);
   }
+  getPlayerName() {
+    return this.playerModel.name;
+  }
 
   getPlayerHighScore() {
     return this.playerModel.getHighScore();
+  }
+
+  setPlayerID(value: string) {
+    this.playerModel.id = value;
+  }
+  getPlayerID() {
+    return this.playerModel.id;
   }
 }

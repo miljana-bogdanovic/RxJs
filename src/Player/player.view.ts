@@ -11,7 +11,7 @@ export class PlayerView {
   showPlayer(x: number, y: number) {
     var thumbImg = document.createElement("img");
     thumbImg.setAttribute("class", "player");
-    thumbImg.src = "./../beach girl happy.png";
+    thumbImg.src = "./../resources/beach girl happy.png";
     thumbImg.onload = () => {
       this.canvasForImage.drawImage(thumbImg, x, y - 120, 200, 200);
     };
