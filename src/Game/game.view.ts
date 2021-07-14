@@ -42,6 +42,9 @@ export class GameView {
   hideInput() {
     this.input.setAttribute("class", "hidden");
   }
+  hideButton() {
+    this.button.setAttribute("class", "hidden");
+  }
   addEndButton() {
     this.button.setAttribute("class", "button");
   }

@@ -4,25 +4,21 @@ export class Player {
     public y: number,
     public name: string = "",
     public highScore: number = 0,
-    public id : string =''
-  ) {
-
+    public id: string = ""
+  ) {}
+  setName(value: string) {
+    this.name = value;
   }
-  setName(value : string){
-      this.name=value;
+  setHighScore(value: number) {
+    this.highScore = value;
   }
-  setHighScore(value : number){
-      this.highScore=value;
-  }
-  getHighScore(){
+  getHighScore() {
     return this.highScore;
+  }
+  setPlayerID(value: string) {
+    this.id = value;
+  }
+  getPlayerID() {
+    return this.id;
+  }
 }
-setPlayerID(value : string){
-  this.id=value;
-}
-getPlayerID(){
-  return this.id;
-}
-}
-
-

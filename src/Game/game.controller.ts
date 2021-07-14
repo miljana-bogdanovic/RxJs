@@ -49,7 +49,7 @@ export class GameContoller {
   Points$: Observable<[number, CoctailController[]]>;
   PlayerEnterPress$: Observable<string>;
   HighScoreSet$: Subject<number>;
-  NewGame$: Observable<any>;
+  NewGame$: Observable<void>;
   IsAlive$: BehaviorSubject<boolean>;
 
   constructor(game: Game, gameView: GameView) {
@@ -58,7 +58,6 @@ export class GameContoller {
     this.IsAlive$ = new BehaviorSubject(true);
     this.ScoreBehavior$ = new BehaviorSubject(0);
     this.HighScoreSet$ = new Subject<number>();
-
     this.createObservables();
   }
 
@@ -115,34 +114,26 @@ export class GameContoller {
   getRandomNumber(range: number) {
     return parseInt((Math.random() * range).toFixed(0));
   }
+
   renderGameScene(
-    interval: number,
+    scoreCount: number,
     playerX: number,
     coctails: CoctailController[],
     playerController: PlayerController
   ) {
     this.gameView.clearCanvas();
-    this.gameView.showScore(interval * 50);
+    this.gameView.showScore(scoreCount * 50);
     playerController.showPlayer(playerX, this.gameView.canvas.height - 70);
     this.gameView.showCoctails(coctails);
   }
 
   createObservables() {
     this.NewGame$ = fromEvent(this.gameView.button, "click").pipe(
-      map(() => {
-        this.saveHighScoreAndRestart();
-      })
+      map(() => this.saveHighScoreAndRestart())
     );
 
     this.CurrentScore$ = this.ScoreBehavior$.pipe(
-      scan((prev, curr) => prev + curr),
-      map((score) => {
-        if (score * 50 > this.game.playerController.getPlayerHighScore()) {
-          this.game.score = score * 50;
-          this.game.playerController.setPlayerHighScore(score * 50);
-        }
-        return score;
-      })
+      scan((prev, curr) => prev + curr)
     );
     this.CoctailCreator$ = interval(1000).pipe(
       map((_) => this.createCoctail())
@@ -159,23 +150,17 @@ export class GameContoller {
       ),
       map((coctails) => {
         coctails.filter(
-          (coctail) =>
-            !(coctail.getY() > this.gameView.canvas.height) &&
-            !coctail.getTouched()
+          (coctail) => !(coctail.getY() > this.gameView.canvas.height)
         );
-        return coctails;
-      }),
-      map((coctails: CoctailController[]) => {
         coctails.forEach((coctail: CoctailController) => {
-          if (!coctail.getTouched()) coctail.setY(coctail.getY() + 50);
-          else coctail.setY(coctail.getY() + 350);
+          !coctail.getTouched()
+            ? coctail.setY(coctail.getY() + 50)
+            : coctail.setY(coctail.getY() + 350);
         });
-        return coctails;
-      }),
-      map((coctails) => {
         coctails.filter((coctail) => !coctail.getTouched());
         return coctails;
       }),
+
       share()
     );
 
@@ -190,13 +175,12 @@ export class GameContoller {
         this.gameView.canvas.width / 2
       ),
       startWith(this.gameView.canvas.width / 2),
-      filter((x) => !(x > this.gameView.canvas.width - 50 || x < 50))
+      filter((x) => !(x > this.gameView.canvas.width - 10 || x < 10))
     );
 
     this.PlayerEnterPress$ = fromEvent(this.gameView.input, "keyup").pipe(
       pluck("key"),
       filter((key) => key === "Enter"),
-
       switchMap((_) => {
         return getPlayer(this.gameView.input.value);
       }),
@@ -247,6 +231,7 @@ export class GameContoller {
     this.gameView.clearCanvas();
     this.IsAlive$.next(false);
     this.gameView.showEnd(this.game.playerController.getPlayerHighScore());
+    this.gameView.hideButton();
   }
   userEntered(response: { name: string; highScore: number; id: string }) {
     this.game.playerController.setPlayerName(response.name);

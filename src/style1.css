@@ -28,24 +28,11 @@ body {
   position: absolute;
   width: 100px;
   left: calc(100% - 120px);
-  top: 60px;
+  top: 50px;
   font-size: 20px;
   height: 55px;
   text-align: center;
 }
 .hidden {
   display: none;
-}
-
-.imgage {
-  animation: fall 2s linear forwards infinite;
-  animation-delay: 1s;
-}
-@keyframes fall {
-  from {
-    transform: translateY(-10vh);
-  }
-  to {
-    transform: translateY(100vh);
-  }
 }

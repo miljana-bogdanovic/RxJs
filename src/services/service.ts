@@ -1,4 +1,3 @@
-import { from, of } from "rxjs";
 
 const API_URL = "http://localhost:3000";
 export const getPlayer = async (input: String) => {
@@ -11,7 +10,9 @@ export const getPlayer = async (input: String) => {
     .catch((er) => console.log(er));
   return player;
 };
-export const postPlayer = async (input: String) : Promise<{ name: string; highScore: number; id : string; }[]>=> {
+export const postPlayer = async (
+  input: String
+): Promise<{ name: string; highScore: number; id: string }[]> => {
   let player;
   fetch(`${API_URL}/players`, {
     method: "POST",
@@ -31,28 +32,29 @@ export const postPlayer = async (input: String) : Promise<{ name: string; highSc
     .catch((er) => console.log(er));
   return [];
 };
-export const putPlayerHighScore = async (input: number, id : string, name : string) : Promise<void> => {
-  console.log(
-    'upis u bazy'
-  );
-  console.log(input, id, name)
+export const putPlayerHighScore = async (
+  input: number,
+  id: string,
+  name: string
+): Promise<void> => {
+  console.log("upis u bazy");
+  console.log(input, id, name);
   fetch(`${API_URL}/players/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      id : id,
+      id: id,
       name: name,
       highScore: input,
     }),
   })
     .then((p) => {
       if (p.ok) {
-       return p.json();
+        return p.json();
       } else throw new Error("fetch error");
     })
     .catch((er) => console.log(er));
   return;
-  //return of([{name : '', highScore : 0}]);
 };

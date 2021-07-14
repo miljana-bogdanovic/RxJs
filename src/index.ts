@@ -6,4 +6,3 @@ const gameView = new GameView();
 const game = new Game(gameView.canvas);
 const gameContoller = new GameContoller(game, gameView);
 gameContoller.startGame();
-
